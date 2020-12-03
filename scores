@@ -1,0 +1,93 @@
+#! /usr/bin/env bash
+
+declare -a SCORES
+
+score_regex="^(.+)[[:space:]](.+)[[:space:]](.+)$"
+score_format="^.*[[:space:]](.+)[[:space:]].+$"
+
+fetch_scores() {
+  local score
+  SCOREFILE="./.scores_${MODE,,}"
+  [[ -a $SCOREFILE ]] || return 1
+  SCORES=()
+  while read -r score; do
+    [[ $score =~ ^(.*)[[:space:]](.*)$ ]] &&
+      SCORES+=("${BASH_REMATCH[1]} ${BASH_REMATCH[2]}")
+  done < "$SCOREFILE"
+  [[ -z ${SCORES[*]} ]] && return 1
+  return 0
+}
+
+get_top_score() {
+  fetch_scores || echo 0
+  [[ ${SCORES[0]} =~ $score_format ]] &&
+    echo "${BASH_REMATCH[1]}"
+}
+
+compare_scores() {
+  local len score index insert
+  insert="$1"
+  len="${#SCORES[@]}"
+  [[ -z ${SCORES[*]} ]] && {
+    [[ $insert ]] && insert_score
+    return 0
+  }
+  index=0
+  for score in "${SCORES[@]}"; do
+    [[ $score =~ $score_format ]] && {
+      score="${BASH_REMATCH[1]}"
+      if ((SCORE>=score)); then
+        [[ $insert ]] && insert_score $((index))
+        return 0
+      fi
+      ((index++))
+      ((index==9)) && return 1
+    }
+  done
+  [[ $insert ]] && insert_score
+  return 0
+}
+
+insert_score() {
+  local index len i scores
+  scores=()
+  index="$1"
+  [[ $index ]] || { SCORES+=("$PLAYER $SCORE $TOPWORDSCORE"); return 0; }
+  len="${#SCORES[@]}"
+  for ((i=0;i<len;i++)); do
+    if ((i==index)); then
+      scores+=("$PLAYER $SCORE $TOPWORDSCORE")
+      ((i<9)) && scores+=("${SCORES[$i]}")
+    elif ((i<9)); then
+      scores+=("${SCORES[$i]}")
+    fi
+  done
+  SCORES=("${scores[@]}")
+}
+
+write_scores() {
+  local score
+  SCOREFILE="./.scores_${MODE,,}"
+  {
+    for score in "${SCORES[@]}"; do
+      echo "$score"
+    done
+  } > "$SCOREFILE"
+}
+
+display_scores() {
+  local score rank player score topword
+  fetch_scores || return 1
+  rank=1
+  printf ">   TOP RANKING -  %-7s MODE  <\n" "$MODE"
+  for score in "${SCORES[@]}"; do
+    [[ $score =~ $score_regex ]] && {
+      player="${BASH_REMATCH[1]}"
+      score="${BASH_REMATCH[2]}"
+      topword="${BASH_REMATCH[3]}"
+      printf "%02d. %s ---------- %06d | %06d\n" "$rank" "$player" "$score" "$topword"
+      ((rank++))
+    }
+  done
+}
+

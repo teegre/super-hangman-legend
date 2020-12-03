@@ -1,0 +1,716 @@
+#! /usr/bin/env bash
+
+source scores
+
+DICT="/usr/share/dict/words"
+SND="$HOME/projets/super-hang-man-legend/snd"
+
+declare -a USEDWORDS
+declare -a LETTERS
+
+pos() ( tput cup "$@" )
+smso() ( tput smso )
+rmso() ( tput rmso )
+red() ( tput setaf 1 )
+green() ( tput setaf 2 )
+yellow() ( tput setaf 3 )
+off()  ( tput sgr0 )
+
+max() ( local v1="$1" v2="$2"; echo $((v1>v2?v1:v2)) )
+
+playsnd() {
+  case $1 in
+    new      ) paplay "$SND/new.wav" ;;
+    correct1 ) paplay "$SND/correct1.wav" & ;;
+    correct2 ) paplay "$SND/correct2.wav" & ;;
+    heal     ) paplay "$SND/heal.wav" & ;;
+    incorrect) paplay "$SND/incorrect.wav" & ;;
+    win      ) paplay "$SND/win.wav" & ;;
+    lose     ) paplay "$SND/lose.wav" & ;;
+    point    ) paplay "$SND/point.wav" & SPID=$! ;;
+    use      ) paplay "$SND/use.wav" & ;;
+    super    ) paplay "$SND/superhangman.wav" & SPID=$! ;;
+    title    ) paplay "$SND/title.wav" & ;;
+    word     ) paplay "$SND/word.wav" & ;;
+    end      ) paplay "$SND/end.wav" & SPID=$! ;;
+  esac
+}
+
+color() {
+  [[ $CHAIN_MODE ]] && { green; return; }
+  [[ $CHAIN_MODE ]] || ((ENERGY<4)) && off
+  [[ $CHAIN_MODE ]] || ((ENERGY>=4 && ENERGY <=6)) && yellow
+  [[ $CHAIN_MODE ]] || ((ENERGY>6)) && red
+}
+
+word_use() {
+  local word
+  for word in "${USEDWORDS[@]}"; do
+    [[ $word == "$1" ]] && return 0
+  done
+  return 1
+}
+
+letter_used() {
+  local letter
+  for letter in "${LETTERS[@]}"; do
+    [[ $letter == "${1^^}" ]] && return 0
+  done
+  return 1
+}
+
+word_random() {
+  local word
+  while :; do
+    word="$(shuf -n 1 "$DICT")"
+    word="${word^^}" # Conversion en majuscules.
+    # On ignore les words de moins de 6 letters.
+    (( ${#word} < 6 )) && continue
+    # On ignore les words contenant une apostrophe.
+    [[ $word =~ [\'] ]] && continue
+    # On ignore les words déjà utilisés.
+    word_use "$word" && continue
+    # Si toutes les conditions sont satisfaites
+    # on ajoute le word à liste des words utilisés.
+    USEDWORDS+=("$word")
+
+    echo "$word" # Affichage.
+    break        # Sortie de la boucle.
+  done
+}
+
+hide_word() {
+  local src L L1 Ln lng dst i
+  src="$1"             # Le word d'origine.
+  lng="${#src}"        # Longueur du word.
+  L1="${src:0:1}"      # Première letter.
+  Ln="${src:$lng-1:1}" # Dernière letter.
+
+  # La boucle permet de lire chaque letter du word.
+  for ((i=0;i<lng;i++)); do
+    L="${src:$i:1}"
+    [[ $L =~ [ÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ-]|[${L1}${Ln}] ]] && {
+      # Aucun changement pour les letters ci-dessus...
+      # on les ajoute simplement à dst
+      dst+="$L"
+      continue
+    }
+    # Sinon on hide...
+    dst+="_"
+  done
+  echo "$dst"
+}
+
+is_extra() {
+  # Détermine si une letter fait partie des letters "extra"
+  # Une letter "extra" peut être la première ou la dernière lettre du word à deviner.
+  # Elles peuvent octroyer un bonus supplémentaire quand elles sont jouées au moment
+  # opportun...
+  local letter
+  letter="${1^^}"
+  letter_used "$letter" && return 1
+  [[ ${WORD:0:1} == "$letter" ]] ||
+    [[ ${WORD:${#MOT}-1:1} == "$letter" ]] && return 0
+  return 1
+}
+
+top_word() {
+  ((PARTIALSCORE>TOPWORDSCORE)) && {
+    TOPWORD="$WORD"
+    ((TOPWORDSCORE=PARTIALSCORE))
+  }
+}
+
+unveil() {
+  local index i dst
+  index="$1"
+  for ((i=0;i<${#WORD};i++)); do
+    (( i == index )) && dst+="${WORD:$i:1}" || dst+="${HIDDEN:$i:1}"
+  done
+  HIDDEN="$dst"
+}
+
+guess() {
+  local letter i resultat
+  resultat=1      # 0 : vrai ; 1 : faux.
+  letter="${1^^}" # Lettre proposée par le joueur convertie en majuscule.
+  for ((i=0;i<${#WORD};i++)); do
+    [[ ${WORD:$i:1} == "$letter" ]] && {
+      unveil $((i))
+      resultat=0
+    }
+  done
+  return $((resultat))
+}
+
+init_screen() {
+  Y_TERM="$(tput lines)"
+  X_TERM="$(tput cols)"
+  tput smcup
+  tput civis
+  stty -echo
+  tput clear
+}
+
+deinit_screen() {
+  tput cnorm
+  tput rmcup
+  stty sane
+}
+
+screen_title() {
+  local msg y x
+  playsnd super
+  WORD="- SUPER HANG MAN LEGEND -"
+  HIDDEN="$(hide_word "$WORD")"
+  red
+  display_hidden_word
+  sleep 1
+  unveil_hidden_word
+  playsnd title
+  msg="スーパーハングマンの伝説"
+  ((y=(Y_TERM/2)+1))
+  ((x=(X_TERM-(${#msg}*2))/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+  msg="appuyer sur une touche pour commencer..."
+  ((y=(Y_TERM/2)+2))
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  tput blink
+  echo -n "$msg"
+  off
+  read -rsn1
+  clear_letters
+  ((y=(Y_TERM/2)+1))
+  pos $((y)) 0; tput el
+  red
+  display_word_animated
+  off
+  tput clear
+}
+
+screen_end() {
+  local msg y x
+  msg="SCORE FINAL : $SCORE | WIN : $WIN"
+  ((y=(Y_TERM/2)-2))
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+}
+
+display() {
+  color
+  display_energy
+  display_score
+  display_header
+  display_info
+  display_top_word
+}
+
+display_message() {
+  # Affiche un message temporaire...
+  local msg y x
+  msg="$1"
+  ((y=(Y_TERM/2)-3))
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) 0; tput el
+  [[ $msg ]] || return 0
+  pos $((y)) $((x)); echo -n "$msg"
+}
+
+display_hidden_word() {
+  local y x l
+  l="${#HIDDEN}"
+  ((y=Y_TERM/2))
+  ((x=(X_TERM-l)/2))
+  pos $((y)) $((x))
+  [[ $1 == "victoire" ]] && smso
+  echo -n "$HIDDEN"
+  [[ $1 == "victoire" ]] && rmso
+}
+
+display_letters() {
+  local y x l L
+  L="${LETTERS[*]}"
+  l="${#L}"
+  ((y=(Y_TERM/2)+2))
+  ((x=(X_TERM-l)/2))
+  pos $((y)) $((x))
+  echo -n "$L"
+}
+
+display_letter_used() {
+  local letter L index
+  letter="${1^^}"
+  index=0
+  for L in "${LETTERS[@]}"; do
+    [[ $L == "$letter" ]] && {
+      LETTERS[$index]=" "
+      playsnd use
+      display_letters
+      sleep 0.25
+      LETTERS[$index]="$letter"
+      display_letters
+      break
+    }
+    ((index++))
+  done
+}
+
+clear_hidden_word() {
+  local y
+  ((y=Y_TERM/2))
+  pos $((y)) 0
+  tput el
+}
+
+clear_letters() {
+  local y
+  ((y=(Y_TERM/2)+2))
+  pos $((y)) 0
+  tput el
+}
+
+display_header() {
+  local header y x
+  header="SCORE"
+  ((y=(Y_TERM/2)-9))
+  ((x=(X_TERM-5)/2))
+  pos $((y)) $((x))
+  echo -n "$header"
+  header="$MODE MODE |"
+  ((x=((X_TERM/2)-${#header})/2))
+  pos $((y)) $((x))
+  echo -n "$header"
+  header="| TOP: $(max "$SCORE" "$TOPSCORE")"
+  ((x=(X_TERM/4)+((X_TERM-${#header})/2)))
+  pos $((y)) $((x))
+  echo -n "$header"
+}
+
+display_score() {
+  local y x
+  ((y=(Y_TERM/2)-8))
+  [[ $1 ]] || ((x=(X_TERM-${#SCORE})/2))
+  [[ $1 ]] && ((x=(X_TERM-${#1})/2))
+  pos $((y)) $((x))
+  [[ $1 ]] || echo -n "$SCORE"
+  [[ $1 ]] && echo -n "$1"
+}
+
+display_energy() {
+  local msg y x index
+
+  ((index=ENERGY_MAX-ENERGY))
+  ((y=(Y_TERM/2)-7))
+  ((ENERGY==ENERGY_MAX)) && {
+    pos $((y)) 0
+    tput el
+    return 0
+  }
+
+  msg="${ENERGY_BAR:0:$index} $index"
+  ((x=(X_TERM-ENERGY_MAX)/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+  tput el
+}
+
+display_info() {
+  local msg y x
+  ((y=(Y_TERM/2)+8))
+  msg="W: $WIN | S: $STREAK | C: $CHAIN | MC: $CHAIN_MAX"
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) 0; tput el
+  pos $((y)) $((x))
+  echo -n "$msg"
+}
+
+display_top_word() {
+  [[ $TOPWORD ]] && {
+   local msg y x
+   msg="BEST: $TOPWORD $TOPWORDSCORE"
+   ((y=(Y_TERM/2)+9))
+   ((x=(X_TERM-${#msg})/2))
+   pos $((y)) 0; tput el
+   pos $((y)) $((x))
+   echo -n "$msg"
+  }
+}
+
+display_centered_message() {
+  local msg y x
+  msg="$1"
+  ((y=Y_TERM/2))
+  ((x=(X_TERM-${#1})/2))
+  pos $((y)) 0; tput el
+  [[ $msg ]] && {
+    pos $((y)) $((x))
+    echo -n "$msg"
+  }
+}
+
+chain() {
+  local e
+  ((ENERGY>0)) && [[ $MODE == "EASY" ]] && {
+    ((e=ENERGY_MAX-ENERGY))
+    ((e==0)) || ((ENERGY--))
+  }
+  [[ $MODE == "EASY" ]] && ((SCORE+=(CHAIN-2)*50))
+  [[ $MODE == "NORMAL" ]] && ((SCORE+=(CHAIN-2)*100))
+  [[ $MODE == "HARD" ]] && ((SCORE+=(CHAIN-2)*150))
+  display_message "+$((SCORE-PREVSCORE)) !"
+  ((PARTIALSCORE+=SCORE-PREVSCORE))
+  ((PREVSCORE=SCORE))
+  display_score_animated
+}
+
+compute_score() {
+  local msg y x
+
+  ((y=Y_TERM/2))
+
+  clear_hidden_word
+  clear_letters
+
+  [[ $FLAWLESS ]] && {
+    ((STREAK++))
+    display_info;
+    [[ $MODE == "EASY" ]] && ((SCORE+=250))
+    [[ $MODE == "NORMAL" ]] && ((SCORE+=500))
+    [[ $MODE == "HARD"   ]] && ((SCORE+=1000))
+    msg="SANS FAUTE: +$((SCORE-PREVSCORE))"
+    ((x=(X_TERM-${#msg})/2))
+    pos $((y)) $((x))
+    echo -n "$msg"
+    display_score_animated
+    ((PARTIALSCORE+=SCORE-PREVSCORE))
+    ((PREVSCORE=SCORE))
+    sleep 1
+    pos $((y)) 0; tput el
+  }
+
+  ((STREAK>1 && STREAK%3==0)) && {
+    [[ $MODE == "EASY" ]] && ((SCORE+=(STREAK/3)*500))
+    [[ $MODE == "NORMAL" ]] && ((SCORE+=(STREAK/3)*2500))
+    [[ $MODE == "HARD" ]] && ((SCORE+=(STREAK/3)*5000))
+    msg="BONUS: +$((SCORE-PREVSCORE))"
+    ((x=(X_TERM-${#msg})/2))
+    pos $((y)) $((x))
+    echo -n "$msg"
+    display_score_animated
+    ((PARTIALSCORE+=SCORE-PREVSCORE))
+    ((PREVSCORE=SCORE))
+    sleep 1
+    pos $((y)) 0; tput el
+  }
+
+  ((SCORE+=(10-ENERGY)*${#WORD}))
+  msg="SCORE: +$((SCORE-PREVSCORE))"
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+  display_score_animated
+  ((PARTIALSCORE+=SCORE-PREVSCORE))
+  ((PREVSCORE=SCORE))
+  sleep 1
+  pos $((y)) 0; tput el
+  sleep 2
+}
+
+heal() {
+  ((WIN%2==0 && ENERGY>0)) && {
+    case $MODE in
+      EASY  ) return ;;
+      NORMAL) ENERGY=$((WIN%6==0?0:ENERGY-1)) ;;
+      HARD  ) ENERGY=$((WIN%10==0?0:ENERGY-1))
+    esac
+    green
+    display_message "ENÉRGIE+"
+    playsnd heal
+    display_energy
+    off
+    sleep 1
+    display_message
+  }
+}
+
+display_score_animated() {
+  local dif step i
+  ((dif=PREVSCORE-SCORE))
+  if   ((dif<50));   then ((step=5+(dif%5)))
+  elif ((dif<1000)); then ((step=50+(dif%50)))
+  else ((step=500+(dif%500)))
+  fi
+  playsnd point 2> /dev/null
+
+  for ((i=PREVSCORE;i<=SCORE;i+=step)); do
+    display_score "$i"
+  done
+  display_score
+  kill $SPID 2> /dev/null
+  unset SPID
+}
+
+display_word_letter_count() {
+  local msg y x
+  msg="${#WORD} LETTRES"
+  ((y=Y_TERM/2))
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+}
+
+unveil_hidden_word() {
+  local l i
+  l="${#WORD}"
+  for ((i=0;i<l;i++)); do
+    unveil $((i))
+    display_hidden_word
+    sleep .25
+  done
+}
+
+display_word_animated() {
+  local L y y2 x i
+  L="${#WORD}"
+  ((y=Y_TERM/2))
+  ((x=(X_TERM-L)/2))
+  for ((i=x;i<x+L;i++)); do
+    ((y2=y))
+    while ((y2<Y_TERM-2)); do
+      pos $((y2)) $((i)); echo -n " "
+      pos $((y2+1)) $((i)); echo -n "${WORD:$((i-x)):1}"
+      ((y2++))
+    done
+    pos $((y2)) $((i)); echo -n " "
+  done
+}
+
+display_end() {
+  local msg y x
+  msg=" - F I N  D E  P A R T I E - "
+  ((y=Y_TERM/2))
+  ((x=(X_TERM-${#msg})/2))
+  tput clear
+  pos $((y)) $((x))
+  echo -n "$msg"
+  sleep 3
+  tput clear
+}
+
+get_player_name() {
+  local msg letter player y x i
+  ((y=(Y_TERM/2)))
+  msg="NEW HIGH SCORE ! ENTER YOUR NAME :"
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y-1)) $((x))
+  echo -n "$msg"
+  msg="---"
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+  i=0
+  while ((i<3)); do
+    read -rsn1 letter || continue
+    [[ $letter =~ [A-Za-z] ]] || continue
+    letter="${letter^^}"
+    pos $((y)) $((x+i))
+    echo -n "$letter"
+    playsnd correct1
+    player+="$letter"
+    ((i++))
+  done
+  sleep 1
+  PLAYER="$player"
+}
+
+display_scoreboard() {
+  local y x i msg score
+  tput clear
+  ((y=(Y_TERM/2)-6))
+  sleep 2
+  i=0
+  while read -r score; do
+    ((x=(X_TERM-${#score})/2))
+    pos $((y+i)) $((x))
+    echo -n "$score"
+    sleep 1
+    ((i++))
+  done <<< "$(display_scores)"
+}
+
+refresh_screen() {
+  Y_TERM="$(tput lines)"
+  X_TERM="$(tput cols)"
+  tput clear
+  display
+  display_hidden_word
+}
+
+pause() {
+  local y x msg
+  msg="- PAUSE -"
+  tput clear
+  ((y=Y_TERM/2))
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+  read -rsn1
+  refresh_screen
+}
+
+trap deinit_screen EXIT QUIT
+trap refresh_screen WINCH
+
+init_screen
+
+MODE="NORMAL"
+
+for opt in "${@}"; do
+  case $opt in
+    splash) shift; screen_title ;;
+    easy  ) shift; MODE="EASY" ;;
+    hard  ) shift; MODE="HARD" ;;
+    rank  ) shift; display_scoreboard; sleep 5; deinit_screen; exit 0
+  esac
+done
+
+RUNNING=1
+ENERGY_BAR="██████████"
+WIN=0
+CHAIN=0
+CHAIN_MAX=0
+STREAK=0
+PREVSCORE=0
+SCORE=0
+PARTIALSCORE=0
+TOPSCORE="$(get_top_score)"
+TOPWORDSCORE=0
+TOPWORD=""
+ENERGY=0
+ENERGY_MAX=10
+PLAYER="???"
+
+while [[ $RUNNING ]]; do
+  LETTERS=() # Initialisation de la liste des letters.
+  WORD="$(word_random)"  # (1)
+  HIDDEN="$(hide_word "$WORD")" # (3)
+
+  display
+  clear_hidden_word
+  clear_letters
+  display_word_letter_count
+  playsnd word
+  sleep 1.5
+  clear_hidden_word
+  display_letters
+  display_hidden_word
+  [[ $SPID ]] && kill "$SPID" 2>/dev/null
+  playsnd new
+
+  FLAWLESS=1
+  PARTIALSCORE=0
+
+  while :; do
+
+    display
+    display_message
+    
+    IFS= read -rsn1 LETTER || continue
+
+    [[ $LETTER == " " ]] && pause && continue
+    [[ $LETTER =~ [àâäéèêëîïôöùûüÀÂÄÉÈÊËÎÏÔÖÙÛÜçÇ] ]] && continue # (5)
+    [[ $LETTER =~ [A-Za-z] ]] || continue # (5)
+    letter_used "$LETTER" && {
+      display_letter_used "$LETTER"
+      continue
+    } # (5)
+
+    is_extra "$LETTER" && {
+      # [[ $CHAIN_MODE ]] && display_message "EXTRA !"
+      [[ $CHAIN_MODE ]] || display_message "+1"
+    }
+
+    if guess "$LETTER"; then
+      ((CHAIN++))
+      CHAIN_MAX="$(max $((CHAIN)) $((CHAIN_MAX)))"
+      case $CHAIN in
+        1) playsnd correct1 ;;
+        2) playsnd correct2 ;;
+        *)
+           if ((ENERGY>0)); then
+             [[ $MODE == "EASY" ]] && playsnd heal
+             [[ $MODE == "EASY" ]] || playsnd correct2
+           else
+             playsnd correct2
+           fi
+      esac
+      ((CHAIN>=3)) && { CHAIN_MODE=1; chain; }
+    else
+      ((ENERGY++))
+      unset FLAWLESS
+      CHAIN=0
+      unset CHAIN_MODE
+      playsnd incorrect
+      STREAK=0;
+    fi
+
+    LETTERS+=("${LETTER^^}")
+    
+    display
+    display_hidden_word
+    display_letters
+
+    [[ $HIDDEN == "$WORD" ]] && { # (8)
+      CHAIN=0
+      unset CHAIN_MODE
+      ((WIN++))
+      ((PREVSCORE=SCORE))
+      display
+      display_message
+      clear_letters
+      playsnd win
+      display_hidden_word victoire
+      sleep 3
+      compute_score
+      heal
+      color
+      display_centered_message "TOTAL: $PARTIALSCORE"
+      sleep 1
+      display_centered_message
+      top_word
+      break
+    }
+    (( ENERGY == ENERGY_MAX )) && { # (7)
+      tput clear
+      display_hidden_word
+      clear_letters
+      unveil_hidden_word
+      # playsnd lose
+      display_word_animated
+      display_end
+      unset RUNNING
+      break
+    }
+  done
+
+done
+
+screen_end
+
+((SCORE>0)) && {
+  fetch_scores
+  compare_scores && {
+    playsnd end
+    get_player_name
+    compare_scores insert
+    write_scores
+    display_scoreboard
+    sleep 5
+  }
+}
+
+[[ $SPID ]] && kill "$SPID" 2> /dev/null
+deinit_screen
