@@ -688,7 +688,7 @@ while [[ $RUNNING ]]; do
       display_hidden_word
       clear_letters
       unveil_hidden_word
-      # playsnd lose
+      playsnd lose
       display_word_animated
       display_end
       unset RUNNING
