@@ -561,7 +561,7 @@ pause() {
   refresh_screen
 }
 
-trap deinit_screen EXIT QUIT
+trap deinit_screen EXIT
 trap refresh_screen WINCH
 
 init_screen
