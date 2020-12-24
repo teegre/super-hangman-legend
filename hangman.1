@@ -1,0 +1,132 @@
+.TH "HANGMAN" "" "2020-12-24" "" "User's Manual"
+.
+.SH "NAME"
+\fBhangman\fR
+.
+.P
+hangman(1) \-\- Guess a word\.
+.
+.SH "SYNOPSIS"
+\fBhangman\fR [\fBOPTIONS\fR]
+.
+.SH "DESCRIPTION"
+\fBHangman\fR is an arcade game where you have to guess a random word\.
+.
+.SH "USAGE"
+\fBhangman\fR [splash] [easy | hard] [rank]
+.
+.br
+.
+.SH "OPTIONS"
+.
+.IP "\(bu" 4
+\fBsplash\fR
+.
+.IP
+Show a splash screen\.
+.
+.IP "\(bu" 4
+\fBeasy\fR
+.
+.IP
+Select easy mode\.
+.
+.IP "\(bu" 4
+\fBhard\fR
+.
+.IP
+Select hard mode\.
+.
+.IP "\(bu" 4
+\fBrank\fR
+.
+.IP
+Display score board\.
+.
+.IP "" 0
+.
+.SH "RULES"
+Guess a random word by entering letters and try to get as much points as possible\.
+.
+.br
+You start the game with 10 \fBenergy\fR points\. For each incorrect letter, you lose 1 \fBenergy\fR point\.
+.
+.br
+You lose the game when \fBenergy\fR reaches 0\.
+.
+.br
+If you enter 3 correct letters in a row, game enters \fBchain\fR mode so that next correct letters grant extra points\.
+.
+.br
+Already visible letters can also be played to get more points or to initiate \fBchain\fR mode\.
+.
+.br
+.
+.P
+If you guess a word flawlessly, you get bonus points\.
+.
+.br
+If you get 3 or more victories in a row, you also get bonus points\.
+.
+.SH "ENERGY"
+In \fBeasy\fR mode you get 1 \fBenergy\fR point for each correct letter entered when in \fBchain\fR mode\.
+.
+.P
+In \fBnormal\fR and \fBhard\fR mode you get 1 \fBenergy\fR point every 2 victories\.
+.
+.P
+In \fBnormal\fR mode, \fBenergy\fR is fully refilled every 6 victories\.
+.
+.P
+In \fBhard\fR mode, \fBenergy\fR is fully refilled every 10 victories\.
+.
+.SH "POINTS"
+victory:
+.
+.IP "\(bu" 4
+letters x energy
+.
+.IP "" 0
+.
+.P
+chain:
+.
+.IP "\(bu" 4
+easy: chain x 50
+.
+.IP "\(bu" 4
+normal: chain x 100
+.
+.IP "\(bu" 4
+hard: chain x 150
+.
+.IP "" 0
+.
+.P
+flawless:
+.
+.IP "\(bu" 4
+easy: 250
+.
+.IP "\(bu" 4
+normal: 500
+.
+.IP "\(bu" 4
+hard: 1000
+.
+.IP "" 0
+.
+.P
+streak:
+.
+.IP "\(bu" 4
+easy: streak x 500
+.
+.IP "\(bu" 4
+normal: streak x 2500
+.
+.IP "\(bu" 4
+hard: streak x 5000
+.
+.IP "" 0
+
