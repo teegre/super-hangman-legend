@@ -10,7 +10,7 @@
 
 ## DEPENDENCIES
 
-coreutils, libpulse, ncurses.
+bash, coreutils, libpulse, ncurses.
 
 ## INSTALL/UNINSTALL
 
