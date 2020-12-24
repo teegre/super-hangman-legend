@@ -8,6 +8,18 @@
 
 **Hangman** is an arcade game where you have to guess a random word.
 
+## DEPENDENCIES
+
+coreutils, libpulse, ncurses.
+
+## INSTALL/UNINSTALL
+
+Clone this repository and,
+
+Install: `make install`
+
+Uninstall: `make uninstall`
+
 ## USAGE
 
 `hangman` [splash] [easy | hard] [rank]<br>
