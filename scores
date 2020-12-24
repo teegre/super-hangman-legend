@@ -70,7 +70,7 @@ insert_score() {
 
 write_scores() {
   local score
-  SCOREFILE="./.scores_${MODE,,}"
+  SCOREFILE="$SCOREDIR/.scores_${MODE,,}"
   {
     for score in "${SCORES[@]}"; do
       echo "$score"
