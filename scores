@@ -1,13 +1,16 @@
 #! /usr/bin/env bash
 
 declare -a SCORES
+SCOREDIR="$HOME/.config/hangman"
+
+[[ -d $SCOREDIR ]] || mkdir -p "$SCOREDIR"
 
 score_regex="^(.+)[[:space:]](.+)[[:space:]](.+)$"
 score_format="^.*[[:space:]](.+)[[:space:]].+$"
 
 fetch_scores() {
   local score
-  SCOREFILE="./.scores_${MODE,,}"
+  SCOREFILE="$SCOREDIR/.scores_${MODE,,}"
   [[ -a $SCOREFILE ]] || return 1
   SCORES=()
   while read -r score; do

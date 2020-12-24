@@ -1,9 +1,9 @@
 #! /usr/bin/env bash
 
-source scores
-
+SNDDIR="/etc/hangman/snd"
 DICT="/usr/share/dict/words"
-SND="$HOME/projets/super-hang-man-legend/snd"
+
+source "/etc/hangman/src/scores"
 
 declare -a USEDWORDS
 declare -a LETTERS
@@ -20,19 +20,19 @@ max() ( local v1="$1" v2="$2"; echo $((v1>v2?v1:v2)) )
 
 playsnd() {
   case $1 in
-    new      ) paplay "$SND/new.ogg" ;;
-    correct1 ) paplay "$SND/correct1.ogg" & ;;
-    correct2 ) paplay "$SND/correct2.ogg" & ;;
-    heal     ) paplay "$SND/heal.ogg" & ;;
-    incorrect) paplay "$SND/incorrect.ogg" & ;;
-    win      ) paplay "$SND/win.ogg" & ;;
-    lose     ) paplay "$SND/lose.ogg" & ;;
-    point    ) paplay "$SND/point.ogg" & SPID=$! ;;
-    use      ) paplay "$SND/use.ogg" & ;;
-    super    ) paplay "$SND/superhangman.ogg" & SPID=$! ;;
-    title    ) paplay "$SND/title.ogg" & ;;
-    word     ) paplay "$SND/word.ogg" & ;;
-    end      ) paplay "$SND/end.ogg" & SPID=$! ;;
+    new      ) paplay "$SNDDIR/new.ogg" ;;
+    correct1 ) paplay "$SNDDIR/correct1.ogg" & ;;
+    correct2 ) paplay "$SNDDIR/correct2.ogg" & ;;
+    heal     ) paplay "$SNDDIR/heal.ogg" & ;;
+    incorrect) paplay "$SNDDIR/incorrect.ogg" & ;;
+    win      ) paplay "$SNDDIR/win.ogg" & ;;
+    lose     ) paplay "$SNDDIR/lose.ogg" & ;;
+    point    ) paplay "$SNDDIR/point.ogg" & SPID=$! ;;
+    use      ) paplay "$SNDDIR/use.ogg" & ;;
+    super    ) paplay "$SNDDIR/superhangman.ogg" & SPID=$! ;;
+    title    ) paplay "$SNDDIR/title.ogg" & ;;
+    word     ) paplay "$SNDDIR/word.ogg" & ;;
+    end      ) paplay "$SNDDIR/end.ogg" & SPID=$! ;;
   esac
 }
 
@@ -64,14 +64,14 @@ word_random() {
   while :; do
     word="$(shuf -n 1 "$DICT")"
     word="${word^^}" # Conversion en majuscules.
-    # On ignore les words de moins de 6 letters.
+    # On ignore les mots de moins de 6 lettres.
     (( ${#word} < 6 )) && continue
-    # On ignore les words contenant une apostrophe.
+    # On ignore les mots contenant une apostrophe.
     [[ $word =~ [\'] ]] && continue
-    # On ignore les words déjà utilisés.
+    # On ignore les mots déjà utilisés.
     word_use "$word" && continue
     # Si toutes les conditions sont satisfaites
-    # on ajoute le word à liste des words utilisés.
+    # on ajoute le mot à liste des mots utilisés.
     USEDWORDS+=("$word")
 
     echo "$word" # Affichage.
@@ -81,16 +81,16 @@ word_random() {
 
 hide_word() {
   local src L L1 Ln lng dst i
-  src="$1"             # Le word d'origine.
-  lng="${#src}"        # Longueur du word.
-  L1="${src:0:1}"      # Première letter.
-  Ln="${src:$lng-1:1}" # Dernière letter.
+  src="$1"             # Le mot d'origine.
+  lng="${#src}"        # Longueur du mot.
+  L1="${src:0:1}"      # Première lettre.
+  Ln="${src:$lng-1:1}" # Dernière lettre.
 
-  # La boucle permet de lire chaque letter du word.
+  # La boucle permet de lire chaque lettre du mot.
   for ((i=0;i<lng;i++)); do
     L="${src:$i:1}"
     [[ $L =~ [ÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ-]|[${L1}${Ln}] ]] && {
-      # Aucun changement pour les letters ci-dessus...
+      # Aucun changement pour les lettres ci-dessus...
       # on les ajoute simplement à dst
       dst+="$L"
       continue
@@ -102,8 +102,8 @@ hide_word() {
 }
 
 is_extra() {
-  # Détermine si une letter fait partie des letters "extra"
-  # Une letter "extra" peut être la première ou la dernière lettre du word à deviner.
+  # Détermine si une lettre fait partie des lettres "extra"
+  # Une lettre "extra" peut être la première ou la dernière lettre du mot à deviner.
   # Elles peuvent octroyer un bonus supplémentaire quand elles sont jouées au moment
   # opportun...
   local letter
@@ -173,7 +173,7 @@ screen_title() {
   ((x=(X_TERM-(${#msg}*2))/2))
   pos $((y)) $((x))
   echo -n "$msg"
-  msg="appuyer sur une touche pour commencer..."
+  msg="press any key..."
   ((y=(Y_TERM/2)+2))
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
@@ -192,7 +192,7 @@ screen_title() {
 
 screen_end() {
   local msg y x
-  msg="SCORE FINAL : $SCORE | WIN : $WIN"
+  msg="FINAL SCORE: $SCORE | VICTORIES: $WIN"
   ((y=(Y_TERM/2)-2))
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
@@ -320,7 +320,7 @@ display_energy() {
 display_info() {
   local msg y x
   ((y=(Y_TERM/2)+8))
-  msg="W: $WIN | S: $STREAK | C: $CHAIN | MC: $CHAIN_MAX"
+  msg="V: $WIN | S: $STREAK | C: $CHAIN | X: $CHAIN_MAX"
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) 0; tput el
   pos $((y)) $((x))
@@ -380,7 +380,7 @@ compute_score() {
     [[ $MODE == "EASY" ]] && ((SCORE+=250))
     [[ $MODE == "NORMAL" ]] && ((SCORE+=500))
     [[ $MODE == "HARD"   ]] && ((SCORE+=1000))
-    msg="SANS FAUTE: +$((SCORE-PREVSCORE))"
+    msg="FLAWLESS: +$((SCORE-PREVSCORE))"
     ((x=(X_TERM-${#msg})/2))
     pos $((y)) $((x))
     echo -n "$msg"
@@ -391,10 +391,10 @@ compute_score() {
     pos $((y)) 0; tput el
   }
 
-  ((STREAK>1 && STREAK%3==0)) && {
-    [[ $MODE == "EASY" ]] && ((SCORE+=(STREAK/3)*500))
-    [[ $MODE == "NORMAL" ]] && ((SCORE+=(STREAK/3)*2500))
-    [[ $MODE == "HARD" ]] && ((SCORE+=(STREAK/3)*5000))
+  ((STREAK>=3)) && {
+    [[ $MODE == "EASY" ]] && ((SCORE+=(STREAK-2)*500))
+    [[ $MODE == "NORMAL" ]] && ((SCORE+=(STREAK-2)*2500))
+    [[ $MODE == "HARD" ]] && ((SCORE+=(STREAK-2)*5000))
     msg="BONUS: +$((SCORE-PREVSCORE))"
     ((x=(X_TERM-${#msg})/2))
     pos $((y)) $((x))
@@ -455,7 +455,7 @@ display_score_animated() {
 
 display_word_letter_count() {
   local msg y x
-  msg="${#WORD} LETTRES"
+  msg="${#WORD} LETTERS"
   ((y=Y_TERM/2))
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
@@ -490,7 +490,7 @@ display_word_animated() {
 
 display_end() {
   local msg y x
-  msg=" - F I N  D E  P A R T I E - "
+  msg=" - GAME OVER - "
   ((y=Y_TERM/2))
   ((x=(X_TERM-${#msg})/2))
   tput clear
@@ -503,7 +503,7 @@ display_end() {
 get_player_name() {
   local msg letter player y x i
   ((y=(Y_TERM/2)))
-  msg="NEW HIGH SCORE ! ENTER YOUR NAME :"
+  msg="NEW HIGH SCORE ! ENTER YOUR NAME:"
   ((x=(X_TERM-${#msg})/2))
   pos $((y-1)) $((x))
   echo -n "$msg"
