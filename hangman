@@ -20,19 +20,19 @@ max() ( local v1="$1" v2="$2"; echo $((v1>v2?v1:v2)) )
 
 playsnd() {
   case $1 in
-    new      ) paplay "$SND/new.wav" ;;
-    correct1 ) paplay "$SND/correct1.wav" & ;;
-    correct2 ) paplay "$SND/correct2.wav" & ;;
-    heal     ) paplay "$SND/heal.wav" & ;;
-    incorrect) paplay "$SND/incorrect.wav" & ;;
-    win      ) paplay "$SND/win.wav" & ;;
-    lose     ) paplay "$SND/lose.wav" & ;;
-    point    ) paplay "$SND/point.wav" & SPID=$! ;;
-    use      ) paplay "$SND/use.wav" & ;;
-    super    ) paplay "$SND/superhangman.wav" & SPID=$! ;;
-    title    ) paplay "$SND/title.wav" & ;;
-    word     ) paplay "$SND/word.wav" & ;;
-    end      ) paplay "$SND/end.wav" & SPID=$! ;;
+    new      ) paplay "$SND/new.ogg" ;;
+    correct1 ) paplay "$SND/correct1.ogg" & ;;
+    correct2 ) paplay "$SND/correct2.ogg" & ;;
+    heal     ) paplay "$SND/heal.ogg" & ;;
+    incorrect) paplay "$SND/incorrect.ogg" & ;;
+    win      ) paplay "$SND/win.ogg" & ;;
+    lose     ) paplay "$SND/lose.ogg" & ;;
+    point    ) paplay "$SND/point.ogg" & SPID=$! ;;
+    use      ) paplay "$SND/use.ogg" & ;;
+    super    ) paplay "$SND/superhangman.ogg" & SPID=$! ;;
+    title    ) paplay "$SND/title.ogg" & ;;
+    word     ) paplay "$SND/word.ogg" & ;;
+    end      ) paplay "$SND/end.ogg" & SPID=$! ;;
   esac
 }
 
