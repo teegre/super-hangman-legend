@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
-SNDDIR="/etc/hangman/snd"
 DICT="/usr/share/dict/words"
+SNDDIR="/etc/hangman/snd"
 
 source "/etc/hangman/src/scores"
 
@@ -503,7 +503,7 @@ display_end() {
 get_player_name() {
   local msg letter player y x i
   ((y=(Y_TERM/2)))
-  msg="NEW HIGH SCORE ! ENTER YOUR NAME:"
+  msg="NEW HIGH SCORE ! ENTER YOUR NAME :"
   ((x=(X_TERM-${#msg})/2))
   pos $((y-1)) $((x))
   echo -n "$msg"
