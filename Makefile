@@ -10,20 +10,20 @@ ASSETDIR  ?= $(CONFIGDIR)/$(PROGNAME)
 
 .PHONY: install
 install: $(PROGNAME).out
-	install -d $(BINDIR)
+	install -d $(DESTDIR)$(BINDIR)
 
-	install -m755 $(PROGNAME).out $(BINDIR)/$(PROGNAME)
+	install -m755 $(PROGNAME).out $(DESTDIR)$(BINDIR)/$(PROGNAME)
 
-	install -Dm644 ./scores   -t $(ASSETDIR)/src
-	install -Dm644 snd/*      -t $(ASSETDIR)/snd
-	install -Dm644 $(MANPAGE) -t $(MANDIR)
-	install -Dm644 LICENSE    -t $(SHAREDIR)/licenses/$(PROGNAME)
+	install -Dm644 ./scores   -t $(DESTDIR)$(ASSETDIR)/src
+	install -Dm644 snd/*      -t $(DESTDIR)$(ASSETDIR)/snd
+	install -Dm644 $(MANPAGE) -t $(DESTDIR)$(MANDIR)
+	install -Dm644 LICENSE    -t $(DESTDIR)$(SHAREDIR)/licenses/$(PROGNAME)
 
 	rm $(PROGNAME).out
 
 .PHONY: uninstall
 uninstall:
-	rm $(BINDIR)/$(PROGNAME)
+	rm $(DESTDIR)$(BINDIR)/$(PROGNAME)
 	rm -rf $(DESTDIR)$(ASSETDIR)
 	rm $(DESTDIR)$(MANDIR)/$(MANPAGE)
-	rm -rf $(SHAREDIR)/licenses/$(PROGNAME)
+	rm -rf $(DESTDIR)$(SHAREDIR)/licenses/$(PROGNAME)
