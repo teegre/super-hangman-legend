@@ -441,7 +441,7 @@ display_score_animated() {
   ((dif=PREVSCORE-SCORE))
   if   ((dif<50));   then ((step=5+(dif%5)))
   elif ((dif<1000)); then ((step=50+(dif%50)))
-  else ((step=500+(dif%500)))
+  else ((step=1000+(dif%1000)))
   fi
   playsnd point 2> /dev/null
 
