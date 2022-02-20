@@ -14,6 +14,7 @@ rmso() ( tput rmso )
 red() ( tput setaf 1 )
 green() ( tput setaf 2 )
 yellow() ( tput setaf 3 )
+blink() ( tput blink )
 off()  ( tput sgr0 )
 
 max() ( local v1="$1" v2="$2"; echo $((v1>v2?v1:v2)) )
@@ -177,7 +178,7 @@ screen_title() {
   ((y=(Y_TERM/2)+2))
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
-  tput blink
+  blink
   echo -n "$msg"
   off
   read -rsn1
@@ -529,13 +530,16 @@ get_player_name() {
 display_scoreboard() {
   local y x i msg score
   tput clear
+  off
   ((y=(Y_TERM/2)-6))
   sleep 2
   i=0
   while read -r score; do
     ((x=(X_TERM-${#score})/2))
     pos $((y+i)) $((x))
+    [[ $POSITION ]] && ((i == POSITION+1)) && blink
     echo -n "$score"
+    [[ $POSITION ]] && ((i == POSITION+1)) && off
     sleep 1
     ((i++))
   done <<< "$(display_scores)"

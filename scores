@@ -35,16 +35,16 @@ compare_scores() {
     [[ $insert ]] && insert_score
     return 0
   }
-  index=0
+  POSITION=0
   for score in "${SCORES[@]}"; do
     [[ $score =~ $score_format ]] && {
       score="${BASH_REMATCH[1]}"
       if ((SCORE>=score)); then
-        [[ $insert ]] && insert_score $((index))
+        [[ $insert ]] && insert_score $((POSITION))
         return 0
       fi
-      ((index++))
-      ((index==9)) && return 1
+      ((POSITION++))
+      ((POSITION==9)) && return 1
     }
   done
   [[ $insert ]] && insert_score
