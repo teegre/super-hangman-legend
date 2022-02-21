@@ -20,20 +20,21 @@ off()  ( tput sgr0 )
 max() ( local v1="$1" v2="$2"; echo $((v1>v2?v1:v2)) )
 
 playsnd() {
+  which paplay > /dev/null || return 1
   case $1 in
-    new      ) paplay "$SNDDIR/new.ogg" ;;
-    correct1 ) paplay "$SNDDIR/correct1.ogg" & ;;
-    correct2 ) paplay "$SNDDIR/correct2.ogg" & ;;
-    heal     ) paplay "$SNDDIR/heal.ogg" & ;;
-    incorrect) paplay "$SNDDIR/incorrect.ogg" & ;;
-    win      ) paplay "$SNDDIR/win.ogg" & ;;
-    lose     ) paplay "$SNDDIR/lose.ogg" & ;;
-    point    ) paplay "$SNDDIR/point.ogg" & SPID=$! ;;
-    use      ) paplay "$SNDDIR/use.ogg" & ;;
-    super    ) paplay "$SNDDIR/superhangman.ogg" & SPID=$! ;;
-    title    ) paplay "$SNDDIR/title.ogg" & ;;
-    word     ) paplay "$SNDDIR/word.ogg" & ;;
-    end      ) paplay "$SNDDIR/end.ogg" & SPID=$! ;;
+    new      ) 2&>1 /dev/null paplay "$SNDDIR/new.ogg" ;;
+    correct1 ) 2&>1 /dev/null paplay "$SNDDIR/correct1.ogg" & ;;
+    correct2 ) 2&>1 /dev/null paplay "$SNDDIR/correct2.ogg" & ;;
+    heal     ) 2&>1 /dev/null paplay "$SNDDIR/heal.ogg" & ;;
+    incorrect) 2&>1 /dev/null paplay "$SNDDIR/incorrect.ogg" & ;;
+    win      ) 2&>1 /dev/null paplay "$SNDDIR/win.ogg" & ;;
+    lose     ) 2&>1 /dev/null paplay "$SNDDIR/lose.ogg" & ;;
+    point    ) 2&>1 /dev/null paplay "$SNDDIR/point.ogg" & SPID=$! ;;
+    use      ) 2&>1 /dev/null paplay "$SNDDIR/use.ogg" & ;;
+    super    ) 2&>1 /dev/null paplay "$SNDDIR/superhangman.ogg" & SPID=$! ;;
+    title    ) 2&>1 /dev/null paplay "$SNDDIR/title.ogg" & ;;
+    word     ) 2&>1 /dev/null paplay "$SNDDIR/word.ogg" & ;;
+    end      ) 2&>1 /dev/null paplay "$SNDDIR/end.ogg" & SPID=$! ;;
   esac
 }
 
