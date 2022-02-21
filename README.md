@@ -53,6 +53,10 @@ Already visible letters can also be played to get more points or to initiate **c
 If you guess a word flawlessly, you get bonus points.<br>
 If you get 3 or more victories in a row, you also get bonus points.
 
+## GAME SCREEN
+
+![screenshot](img/screenshot.png)
+
 ## ENERGY
 
 In **easy** mode you get 1 **energy** point for each correct letter entered when in **chain** mode.
