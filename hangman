@@ -622,6 +622,7 @@ while [[ $RUNNING ]]; do
 
     display
     display_message
+    display_letters
     
     IFS= read -rsn1 LETTER || continue
 
