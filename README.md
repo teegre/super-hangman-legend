@@ -8,6 +8,8 @@
 
 **Hangman** is an arcade game where you have to guess a random word.
 
+Best played with **cool-retro-term**
+
 ## DEPENDENCIES
 
 bash, coreutils, libpulse, ncurses, words.
@@ -51,7 +53,7 @@ If you enter 3 correct letters in a row, game enters **chain** mode so that next
 Already visible letters can also be played to get more points or to initiate **chain** mode.<br>
 
 If you guess a word flawlessly, you get bonus points.<br>
-If you get 3 or more victories in a row, you also get bonus points.
+If you get 3 or more flawless victories in a row, you also get bonus points.
 
 ## GAME SCREEN
 
