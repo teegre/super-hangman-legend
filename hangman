@@ -21,6 +21,7 @@ max() ( local v1="$1" v2="$2"; echo $((v1>v2?v1:v2)) )
 
 playsnd() {
   which paplay > /dev/null || return 1
+  [[ $QUIET ]] && return 1
   case $1 in
     new      ) paplay "$SNDDIR/new.ogg" 2> /dev/null;;
     correct1 ) (paplay "$SNDDIR/correct1.ogg" 2> /dev/null) & ;;
@@ -575,12 +576,22 @@ MODE="NORMAL"
 
 for opt in "${@}"; do
   case $opt in
-    splash) shift; screen_title ;;
+    splash) shift; SPLASH=1 ;;
     easy  ) shift; MODE="EASY" ;;
     hard  ) shift; MODE="HARD" ;;
-    rank  ) shift; display_scoreboard; sleep 5; deinit_screen; exit 0
+    rank  ) shift; RANK=1 ;;
+    quiet ) shift; QUIET=1
   esac
 done
+
+(( RANK )) && {
+  display_score_board
+  sleep 5
+  deinit_screen
+  exit 0
+}
+
+(( SPLASH )) && screen_title
 
 RUNNING=1
 ENERGY_BAR="██████████"
@@ -720,3 +731,13 @@ screen_end
 
 [[ $SPID ]] && kill "$SPID" 2> /dev/null
 deinit_screen
+
+# Score recap
+(( SCORE )) && {
+  echo "Top:        ${TOPSCORE}"
+  echo "Score:      ${SCORE}"
+  echo "Top word:   ${TOPWORD}: ${TOPWORDSCORE}"
+  echo "Best chain: ${CHAIN_MAX}"
+  echo "Victories:  ${WIN}"
+  echo "Streak:     ${STREAK}"
+}
