@@ -24,7 +24,7 @@ Uninstall: `make uninstall`
 
 ## USAGE
 
-`hangman [splash] [easy | hard] [rank]`<br>
+`hangman [splash] [easy | hard] [rank] [quiet] `<br>
 
 ## OPTIONS
 
@@ -42,7 +42,11 @@ Uninstall: `make uninstall`
 
   * **rank**
 
-    Display score board.
+    Display score board and exit.
+
+  * **quiet**
+
+    Disable ingame sounds.
 
 ## RULES
 

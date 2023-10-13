@@ -585,7 +585,7 @@ for opt in "${@}"; do
 done
 
 (( RANK )) && {
-  display_score_board
+  display_scoreboard
   sleep 5
   deinit_screen
   exit 0
