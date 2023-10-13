@@ -2,7 +2,7 @@
 
 ## SYNOPSIS
 
-`hangman` [**OPTIONS**]
+`hangman [OPTIONS]`
 
 ## DESCRIPTION
 
@@ -24,7 +24,7 @@ Uninstall: `make uninstall`
 
 ## USAGE
 
-`hangman` [splash] [easy | hard] [rank]<br>
+`hangman [splash] [easy | hard] [rank]`<br>
 
 ## OPTIONS
 
@@ -69,25 +69,25 @@ In **normal** mode, **energy** is fully refilled every 6 victories.
 
 In **hard** mode, **energy** is fully refilled every 10 victories.
 
-## POINTS
+## SCORING
 
-victory:
+Victory:
 
   - letters x energy
 
-chain:
+Chain:
 
   - easy: chain x 50
   - normal: chain x 100
   - hard: chain x 150
 
-flawless:
+Flawless:
 
   - easy: 250
   - normal: 500
   - hard: 1000
 
-streak:
+Streak:
 
   - easy: streak x 500
   - normal: streak x 2500
