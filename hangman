@@ -134,16 +134,16 @@ unveil() {
 }
 
 guess() {
-  local letter i resultat
-  resultat=1      # 0 : vrai ; 1 : faux.
+  local letter i result
+  result=1      # 0 : vrai ; 1 : faux.
   letter="${1^^}" # Lettre proposée par le joueur convertie en majuscule.
   for ((i=0;i<${#WORD};i++)); do
     [[ ${WORD:$i:1} == "$letter" ]] && {
       unveil $((i))
-      resultat=0
+      result=0
     }
   done
-  return $((resultat))
+  return $((result))
 }
 
 init_screen() {
@@ -209,6 +209,7 @@ display() {
   display_header
   display_info
   display_top_word
+  [[ $FLAWLESS ]] && display_target_score
 }
 
 display_message() {
@@ -229,7 +230,7 @@ display_hidden_word() {
   ((x=(X_TERM-l)/2))
   pos $((y)) $((x))
   [[ $1 == "victoire" ]] && smso
-  echo -n "$HIDDEN"
+  echo -n " $HIDDEN "
   [[ $1 == "victoire" ]] && rmso
 }
 
@@ -369,6 +370,51 @@ chain() {
   display_score_animated
 }
 
+clear_target_score() {
+  local y
+  ((y=(Y_TERM/2)+4))
+  pos $((y)) 1
+  tput el
+}
+
+display_target_score() {
+  local i len target=0 msg y x
+  declare -A UNIQUE
+
+  for ((i=0;i<${#WORD};i++)); do
+    [[ ${WORD:$i:1} =~ [àâäéèêëîïôöùûüÀÂÄÉÈÊËÎÏÔÖÙÛÜçÇ] ]] && continue
+    UNIQUE+=("${WORD:$i:1}" 1)
+  done
+
+  ((len=${#UNIQUE[*]}-2))
+  unset UNIQUE
+
+  for ((i=1;i<=len;i++)); do
+    [[ $MODE == "EASY" ]] && ((target+=i*50))
+    [[ $MODE == "NORMAL" ]] && ((target+=i*100))
+    [[ $MODE == "HARD" ]] && ((target+=i*150))
+  done
+
+  ((target+=(10-ENERGY)*${#WORD}))
+
+  [[ $MODE == "EASY" ]] && ((target+=250))
+  [[ $MODE == "NORMAL" ]] && ((target+=500))
+  [[ $MODE == "HARD"   ]] && ((target+=1000))
+
+  ((STREAK>1)) && {
+    [[ $MODE == "EASY" ]]   && ((target+=(STREAK-2+1)*500))
+    [[ $MODE == "NORMAL" ]] && ((target+=(STREAK-2+1)*2500))
+    [[ $MODE == "HARD" ]]   && ((target+=(STREAK-2+1)*5000))
+  }
+
+  msg="TARGET: $target pts"
+
+  ((y=(Y_TERM/2)+4))
+  ((x=(X_TERM-${#msg})/2))
+  pos $((y)) $((x))
+  echo -n "$msg"
+}
+
 compute_score() {
   local msg y x
 
@@ -430,7 +476,7 @@ heal() {
       HARD  ) ENERGY=$((WIN%10==0?0:ENERGY-1))
     esac
     green
-    display_message "ENÉRGIE+"
+    display_message "ENERGY+"
     playsnd heal
     display_energy
     off
@@ -441,11 +487,11 @@ heal() {
 
 display_score_animated() {
   local dif step i
-  ((dif=PREVSCORE-SCORE))
-  if   ((dif<50));   then ((step=5+(dif%5)))
-  elif ((dif<1000)); then ((step=50+(dif%50)))
-  else ((step=1000+(dif%1000)))
+  ((dif=SCORE-PREVSCORE))
+  if ((dif<1000)); then ((step=5))
+  else ((step=dif/100))
   fi
+
   playsnd point 2> /dev/null
 
   for ((i=PREVSCORE;i<=SCORE;i+=step)); do
@@ -576,11 +622,11 @@ MODE="NORMAL"
 
 for opt in "${@}"; do
   case $opt in
-    splash) shift; SPLASH=1 ;;
-    easy  ) shift; MODE="EASY" ;;
-    hard  ) shift; MODE="HARD" ;;
-    rank  ) shift; RANK=1 ;;
-    quiet ) shift; QUIET=1
+    splash|s) shift; SPLASH=1 ;;
+    easy|e  ) shift; MODE="EASY" ;;
+    hard|h  ) shift; MODE="HARD" ;;
+    rank|r  ) shift; RANK=1 ;;
+    quiet|q ) shift; QUIET=1
   esac
 done
 
@@ -614,6 +660,7 @@ while [[ $RUNNING ]]; do
   WORD="$(word_random)"  # (1)
   HIDDEN="$(hide_word "$WORD")" # (3)
 
+  clear_target_score
   display
   clear_hidden_word
   clear_letters
@@ -646,7 +693,6 @@ while [[ $RUNNING ]]; do
     } # (5)
 
     is_extra "$LETTER" && {
-      # [[ $CHAIN_MODE ]] && display_message "EXTRA !"
       [[ $CHAIN_MODE ]] || display_message "+1"
     }
 
@@ -672,6 +718,7 @@ while [[ $RUNNING ]]; do
       unset CHAIN_MODE
       playsnd incorrect
       STREAK=0;
+      clear_target_score
     fi
 
     LETTERS+=("${LETTER^^}")
