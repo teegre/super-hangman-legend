@@ -23,6 +23,7 @@ playsnd() {
   which paplay > /dev/null || return 1
   [[ $QUIET ]] && return 1
   case $1 in
+    pause    ) (paplay "$SNDDIR/pause.ogg" 2> /dev/null) & ;;
     new      ) paplay "$SNDDIR/new.ogg" 2> /dev/null;;
     correct1 ) (paplay "$SNDDIR/correct1.ogg" 2> /dev/null) & ;;
     correct2 ) (paplay "$SNDDIR/correct2.ogg" 2> /dev/null) & ;;
@@ -609,7 +610,9 @@ pause() {
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
   echo -n "$msg"
+  playsnd pause
   read -rsn1
+  playsnd pause
   refresh_screen
 }
 
