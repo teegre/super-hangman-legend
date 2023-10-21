@@ -1,4 +1,4 @@
-.TH "HANGMAN" "" "2020-12-24" "" "User's Manual"
+.TH "HANGMAN" "" "2023-10-21" "" "User's Manual"
 .
 .SH "NAME"
 \fBhangman\fR
@@ -13,7 +13,7 @@ hangman(1) \-\- Guess a word\.
 \fBHangman\fR is an arcade game where you have to guess a random word\.
 .
 .SH "USAGE"
-\fBhangman\fR [splash] [easy | hard] [rank] [quiet]
+\fBhangman\fR [s<plash>] [e<asy> | h<ard>] [r<ank>] [q<uiet>]
 .
 .br
 .
@@ -55,16 +55,28 @@ Disable ingame sounds\.
 Guess a random word by entering letters and try to get as much points as possible\.
 .
 .br
+To help you, the first and the last letter are shown.
+.
+.br
+The game also displays the maximum score you can get if you make no mistake.
+.
+.br
 You start the game with 10 \fBenergy\fR points\. For each incorrect letter, you lose 1 \fBenergy\fR point\.
 .
 .br
 You lose the game when \fBenergy\fR reaches 0\.
 .
 .br
-If you enter 3 correct letters in a row, game enters \fBchain\fR mode so that next correct letters grant extra points\.
+If you enter 3 correct letters in a row, game enters \fBchain\fR mode\.
 .
 .br
-Already visible letters can also be played to get more points or to initiate \fBchain\fR mode\.
+In this mode you start to earn points and next correct letters grant extra points\.
+.
+.br
+Letters that are visible at the beginning of a game can also be played anytime
+.
+.br
+to get more points or to initiate \fBchain\fR mode\.
 .
 .br
 .
@@ -98,13 +110,13 @@ letters x energy
 chain:
 .
 .IP "\(bu" 4
-easy: chain x 50
+easy: ( chain - 2 ) x 50
 .
 .IP "\(bu" 4
-normal: chain x 100
+normal: ( chain - 2 ) x 100
 .
 .IP "\(bu" 4
-hard: chain x 150
+hard: ( chain - 2 ) x 150
 .
 .IP "" 0
 .
