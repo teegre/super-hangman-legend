@@ -702,17 +702,15 @@ while [[ $RUNNING ]]; do
     if guess "$LETTER"; then
       ((CHAIN++))
       CHAIN_MAX="$(max $((CHAIN)) $((CHAIN_MAX)))"
-      case $CHAIN in
-        1) playsnd correct1 ;;
-        2) playsnd correct2 ;;
-        *)
-           if ((ENERGY>0)); then
-             [[ $MODE == "EASY" ]] && playsnd heal
-             [[ $MODE == "EASY" ]] || playsnd correct2
-           else
-             playsnd correct2
-           fi
-      esac
+      if ((CHAIN<3)); then
+        playsnd correct1
+      elif ((ENERGY>0)); then
+        [[ $MODE == "EASY" ]] && playsnd heal
+        [[ $MODE == "EASY" ]] || playsnd correct2
+      else
+        playsnd correct2
+      fi
+
       ((CHAIN>=3)) && { CHAIN_MODE=1; chain; }
     else
       ((ENERGY++))
