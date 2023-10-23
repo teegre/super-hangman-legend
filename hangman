@@ -489,7 +489,8 @@ heal() {
 display_score_animated() {
   local dif step i
   ((dif=SCORE-PREVSCORE))
-  if ((dif<1000)); then ((step=5))
+  if ((dif<100)); then ((step=1))
+  elif ((dif<1000)); then ((step=5))
   else ((step=dif/100))
   fi
 
@@ -773,19 +774,9 @@ screen_end
     compare_scores insert
     write_scores
     display_scoreboard
-    sleep 5
   }
+  sleep 5
 }
 
 [[ $SPID ]] && kill "$SPID" 2> /dev/null
 deinit_screen
-
-# Score recap
-(( SCORE )) && {
-  echo "Top:        ${TOPSCORE}"
-  echo "Score:      ${SCORE}"
-  echo "Top word:   ${TOPWORD}: ${TOPWORDSCORE}"
-  echo "Best chain: ${CHAIN_MAX}"
-  echo "Victories:  ${WIN}"
-  echo "Streak:     ${STREAK}"
-}
