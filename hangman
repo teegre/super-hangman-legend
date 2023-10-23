@@ -30,6 +30,7 @@ playsnd() {
     heal     ) (paplay "$SNDDIR/heal.ogg" 2> /dev/null) & ;;
     incorrect) (paplay "$SNDDIR/incorrect.ogg" 2> /dev/null) & ;;
     win      ) (paplay "$SNDDIR/win.ogg" 2> /dev/null) & ;;
+    flawless ) (paplay "$SNDDIR/flawless.ogg" 2> /dev/null) & ;;
     lose     ) (paplay "$SNDDIR/lose.ogg" 2> /dev/null) & ;;
     point    ) (paplay "$SNDDIR/point.ogg" 2> /dev/null) & SPID=$! ;;
     use      ) (paplay "$SNDDIR/use.ogg" 2> /dev/null) & ;;
@@ -195,8 +196,9 @@ screen_title() {
 }
 
 screen_end() {
-  local msg y x
-  msg="FINAL SCORE: $SCORE | VICTORIES: $WIN"
+  local maxscore msg y x
+  ((maxscore=MAXSCORE>0?100*SCORE/MAXSCORE:0))
+  msg="FINAL SCORE: $SCORE | VICTORIES: $WIN | MAX CHAIN: $CHAIN_MAX | STREAK: $MAXSTREAK | $((maxscore))%"
   ((y=(Y_TERM/2)-2))
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
@@ -409,6 +411,8 @@ display_target_score() {
   }
 
   msg="TARGET: $target pts"
+
+  ((TARGETSCORE=target))
 
   ((y=(Y_TERM/2)+4))
   ((x=(X_TERM-${#msg})/2))
@@ -649,6 +653,8 @@ WIN=0
 CHAIN=0
 CHAIN_MAX=0
 STREAK=0
+MAXSTREAK=0
+MAXSCORE=0
 PREVSCORE=0
 SCORE=0
 PARTIALSCORE=0
@@ -737,7 +743,9 @@ while [[ $RUNNING ]]; do
       display
       display_message
       clear_letters
-      playsnd win
+      ((FLAWLESS)) && playsnd flawless
+      ((FLAWLESS)) || playsnd win
+      ((FLAWLESS)) && ((MAXSTREAK++))
       display_hidden_word victoire
       sleep 3
       compute_score
@@ -745,6 +753,7 @@ while [[ $RUNNING ]]; do
       color
       display_centered_message "TOTAL: $PARTIALSCORE"
       sleep 1
+      ((MAXSCORE+=TARGETSCORE))
       display_centered_message
       top_word
       break
