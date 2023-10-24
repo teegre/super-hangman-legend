@@ -612,7 +612,7 @@ pause() {
   refresh_screen
 }
 
-trap 'clear; deinit_screen; exit 0' INT
+trap 'clear; tput cnorm; tput rmcup; stty sane; exit 0' INT
 trap refresh_screen WINCH
 
 init_screen
