@@ -417,6 +417,7 @@ compute_score() {
 
   [[ $FLAWLESS ]] && {
     ((STREAK++))
+    ((MAXSTREAK<STREAK?STREAK:MAXSTREAK))
     display_info;
     [[ $MODE == "EASY" ]] && ((SCORE+=250))
     [[ $MODE == "NORMAL" ]] && ((SCORE+=500))
@@ -735,7 +736,6 @@ while [[ $RUNNING ]]; do
       clear_letters
       ((FLAWLESS)) && playsnd flawless
       ((FLAWLESS)) || playsnd win
-      ((FLAWLESS)) && ((MAXSTREAK++))
       display_hidden_word victoire
       sleep 2
       compute_score
