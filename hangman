@@ -612,7 +612,7 @@ pause() {
   refresh_screen
 }
 
-trap deinit_screen EXIT
+trap 'clear; deinit_screen; exit 0' INT
 trap refresh_screen WINCH
 
 init_screen
@@ -721,7 +721,7 @@ while [[ $RUNNING ]]; do
     fi
 
     LETTERS+=("${LETTER^^}")
-    
+
     display
     display_hidden_word
     display_letters
