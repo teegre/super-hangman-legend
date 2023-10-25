@@ -417,7 +417,7 @@ compute_score() {
 
   [[ $FLAWLESS ]] && {
     ((STREAK++))
-    ((MAXSTREAK<STREAK?STREAK:MAXSTREAK))
+    ((MAXSTREAK=MAXSTREAK<STREAK?STREAK:MAXSTREAK))
     display_info;
     [[ $MODE == "EASY" ]] && ((SCORE+=250))
     [[ $MODE == "NORMAL" ]] && ((SCORE+=500))
