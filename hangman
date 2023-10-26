@@ -198,7 +198,10 @@ screen_title() {
 screen_end() {
   local maxscore msg y x
   ((maxscore=MAXSCORE>0?100*SCORE/MAXSCORE:0))
-  msg="FINAL SCORE: $SCORE | VICTORIES: $WIN | MAX CHAIN: $CHAIN_MAX | STREAK: $MAXSTREAK | $((maxscore))%"
+  ((TARGETSCORE>0)) && \
+    msg="FINAL SCORE: $SCORE | V: $WIN | xC: $CHAIN_MAX | xS: $MAXSTREAK | $((maxscore))%"
+  ((TARGETSCORE==0)) && \
+    msg="FINAL SCORE: $SCORE | V: $WIN | xC: $CHAIN_MAX | xS: $MAXSTREAK | $((maxscore))%"
   ((y=(Y_TERM/2)-2))
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) $((x))
@@ -226,14 +229,27 @@ display_message() {
 }
 
 display_hidden_word() {
-  local y x l
+  local y x l count
   l="${#HIDDEN}"
   ((y=Y_TERM/2))
   ((x=(X_TERM-l)/2))
   pos $((y)) $((x))
-  [[ $1 == "victoire" ]] && smso
-  echo -n " $HIDDEN "
-  [[ $1 == "victoire" ]] && rmso
+
+  [[ $1 ]] || {
+    COUNT="$(grep "^${HIDDEN//_/.}$" -ic "$DICT")"
+    echo -n " ${HIDDEN} "
+    pos $((y+1)) $((x))
+    tput el
+    echo -n " [ 1/${COUNT} ] "
+  }
+
+  [[ $1 == "victoire" ]] && {
+    smso
+    echo -n " $HIDDEN "
+    rmso
+    pos $((y+1)) 1
+    tput el
+  }
 }
 
 display_letters() {
@@ -326,7 +342,7 @@ display_energy() {
 display_info() {
   local msg y x
   ((y=(Y_TERM/2)+8))
-  msg="V: $WIN | S: $STREAK | C: $CHAIN | X: $CHAIN_MAX"
+  msg="V: $WIN | S: $STREAK | xS: $MAXSTREAK | C: $CHAIN | xC: $CHAIN_MAX"
   ((x=(X_TERM-${#msg})/2))
   pos $((y)) 0; tput el
   pos $((y)) $((x))
@@ -377,6 +393,11 @@ compute_target_score() {
   local i len target=0
   declare -A UNIQUE
 
+  [[ $MODE == "EASY" ]] && {
+    TARGETSCORE=0
+    return
+  }
+
   for ((i=0;i<${#WORD};i++)); do
     [[ ${WORD:$i:1} =~ [àâäéèêëîïôöùûüÀÂÄÉÈÊËÎÏÔÖÙÛÜçÇ] ]] && continue
     UNIQUE+=("${WORD:$i:1}" 1)
@@ -386,19 +407,16 @@ compute_target_score() {
   unset UNIQUE
 
   for ((i=1;i<=len;i++)); do
-    [[ $MODE == "EASY" ]] && ((target+=i*50))
     [[ $MODE == "NORMAL" ]] && ((target+=i*100))
     [[ $MODE == "HARD" ]] && ((target+=i*150))
   done
 
   ((target+=(10-ENERGY)*${#WORD}))
 
-  [[ $MODE == "EASY" ]] && ((target+=250))
   [[ $MODE == "NORMAL" ]] && ((target+=500))
   [[ $MODE == "HARD"   ]] && ((target+=1000))
 
   ((STREAK>1)) && {
-    [[ $MODE == "EASY" ]]   && ((target+=(STREAK-2+1)*500))
     [[ $MODE == "NORMAL" ]] && ((target+=(STREAK-2+1)*2500))
     [[ $MODE == "HARD" ]]   && ((target+=(STREAK-2+1)*5000))
   }
@@ -612,7 +630,7 @@ pause() {
   refresh_screen
 }
 
-trap 'clear; tput cnorm; tput rmcup; stty sane; exit 0' INT
+trap 'tput clear; tput cnorm; tput rmcup; stty sane; exit 0' INT
 trap refresh_screen WINCH
 
 init_screen
@@ -741,9 +759,14 @@ while [[ $RUNNING ]]; do
       compute_score
       heal
       color
-      ((SUCCESSRATIO=TARGETSCORE>0?100*ACTUALSCORE/TARGETSCORE:0))
-      display_centered_message "TOTAL: $PARTIALSCORE (${SUCCESSRATIO}%)"
-      sleep 1
+      ((TARGETSCORE>0)) && \
+        ((SUCCESSRATIO=TARGETSCORE>0?100*ACTUALSCORE/TARGETSCORE:0))
+      if [[ $MODE != "EASY" ]]; then
+        display_centered_message "TOTAL: $PARTIALSCORE (${SUCCESSRATIO}%)"
+      else
+        display_centered_message "TOTAL: $PARTIALSCORE"
+      fi
+      sleep 1.5
       ((MAXSCORE+=TARGETSCORE))
       display_centered_message
       top_word
@@ -763,7 +786,6 @@ while [[ $RUNNING ]]; do
       break
     }
   done
-
 done
 
 screen_end
